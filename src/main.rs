@@ -1,13 +1,10 @@
 mod game;
-use game::Game;
+use game::{init_board, print_board_size};
 
 use bevy::prelude::*;
 
 fn main() {
-    let game = Game::new();
-    println!("Game board width: {}", game.board.width);
-    println!("Game board height: {}", game.board.height);
-    println!("Game board height: {:?}", game.board.tiles);
-
-    App::new().run();
+    App::new()
+        .add_systems(Startup, (init_board, print_board_size).chain())
+        .run();
 }

@@ -1,27 +1,26 @@
+use bevy::prelude::*;
 
-pub struct Board {
-    pub width: i16,
-    pub height: i16,
-    pub tiles: Vec<i16>
+#[derive(Component)]
+pub struct Dimensions {
+    width: i16,
+    height: i16,
 }
 
-impl Board {
-    fn new() -> Self {
-        Self {
-            width: 3,
-            height: 3,
-            tiles: vec![1,1,1,1,1,1,1,1,0]
-        }
-    }
-}
-pub struct Game {
-    pub board: Board,
+#[derive(Component)]
+pub struct Board;
+
+pub fn init_board(mut commands: Commands) {
+    commands.spawn((
+        Board,
+        Dimensions {
+            width: 4,
+            height: 4,
+        },
+    ));
 }
 
-impl Game {
-    pub fn new() -> Self {
-        Self {
-            board: Board::new(),
-        }
+pub fn print_board_size(query: Query<&Dimensions, With<Board>>) {
+    for dimensions in &query {
+        println!("width: {}, height: {}", dimensions.width, dimensions.height);
     }
 }
