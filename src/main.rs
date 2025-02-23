@@ -1,12 +1,16 @@
 mod game;
-use game::{draw_hud, draw_tiles, init_board};
+use game::{draw_hud, handle_tile_selection, init_board, spawn_tiles, update_active_tile};
 
 use bevy::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, init_board)
-        .add_systems(Update, (draw_tiles, draw_hud))
+        .insert_resource(ClearColor(Color::BLACK))
+        .add_systems(
+            Startup,
+            (init_board, spawn_tiles, draw_hud).chain(),
+        )
+        .add_systems(Update, (handle_tile_selection, update_active_tile).chain())
         .run();
 }
