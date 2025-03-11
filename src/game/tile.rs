@@ -14,58 +14,61 @@ pub struct Tile {
 pub fn handle_tile_shuffle(
     keys: Res<ButtonInput<KeyCode>>,
     mut q_board: Query<&mut Board>,
-    mut q_tiles: Query<(&mut Tile, &mut Visibility), With<Tile>>,
+    mut q_tiles: Query<(&mut Tile, &mut Visibility, Entity), With<Tile>>,
+    children_query: Query<&Children>,
+    mut commands: Commands,
 ) {
     let mut board = q_board.single_mut();
+    let mut target_gap_index: Option<i16> = None;
 
-    if keys.just_pressed(KeyCode::Enter) {
-        let right = board.active_tile_idx + 1;
-        let left = board.active_tile_idx - 1;
-        let up = board.active_tile_idx + board.cols;
-        let down = board.active_tile_idx - board.cols;
+    if keys.just_pressed(KeyCode::KeyD) {
+        target_gap_index = Some(board.active_tile_idx + 1);
+    }
 
-        if board.gap_idx.contains(&right)
-            || board.gap_idx.contains(&left)
-            || board.gap_idx.contains(&up)
-            || board.gap_idx.contains(&down)
-        {
-            for (tile, mut visibility) in q_tiles.iter_mut() {
-                if tile.idx == board.active_tile_idx {
-                    *visibility = Visibility::Hidden;
+    if keys.just_pressed(KeyCode::KeyA) {
+        target_gap_index = Some(board.active_tile_idx - 1);
+    }
+
+    if keys.just_pressed(KeyCode::KeyW) {
+        target_gap_index = Some(board.active_tile_idx - board.cols);
+    }
+
+    if keys.just_pressed(KeyCode::KeyS) {
+        target_gap_index = Some(board.active_tile_idx + board.cols);
+    }
+
+    if target_gap_index.is_some() && board.gap_idx.contains(&target_gap_index.unwrap()) {
+        let mut pipe_to_append: Option<Entity> = None;
+        let active_idx = board.active_tile_idx.clone();
+
+        for (tile, mut visibility, tile_entity) in q_tiles.iter_mut() {
+            if tile.idx == board.active_tile_idx {
+                *visibility = Visibility::Hidden;
+                for pipe_entity in children_query.iter_descendants(tile_entity) {
+                    commands.entity(tile_entity).remove_children(&[pipe_entity]);
+                    pipe_to_append = Some(pipe_entity);
                 }
-                if board.gap_idx.contains(&tile.idx) {
-                    *visibility = Visibility::Visible;
+            }
+            if board.gap_idx.contains(&tile.idx) {
+                *visibility = Visibility::Visible;
+            }
+        }
+
+        if pipe_to_append.is_some() {
+            let pipe = pipe_to_append.unwrap();
+            for (tile, mut _visibility, tile_entity) in q_tiles.iter_mut() {
+                if tile.idx == target_gap_index.unwrap() {
+                    commands.entity(tile_entity).clear_children();
+                    commands.entity(tile_entity).add_child(pipe);
                 }
             }
         }
 
-        if board.gap_idx.contains(&right) {
-            let active_idx = board.active_tile_idx.clone();
-            board.gap_idx.push(active_idx);
-            board.gap_idx.retain(|value| *value != right);
-            board.active_tile_idx = right;
-        }
-
-        if board.gap_idx.contains(&left) {
-            let active_idx = board.active_tile_idx.clone();
-            board.gap_idx.push(active_idx);
-            board.gap_idx.retain(|value| *value != left);
-            board.active_tile_idx = left;
-        }
-
-        if board.gap_idx.contains(&up) {
-            let active_idx = board.active_tile_idx.clone();
-            board.gap_idx.push(active_idx);
-            board.gap_idx.retain(|value| *value != up);
-            board.active_tile_idx = up;
-        }
-
-        if board.gap_idx.contains(&down) {
-            let active_idx = board.active_tile_idx.clone();
-            board.gap_idx.push(active_idx);
-            board.gap_idx.retain(|value| *value != down);
-            board.active_tile_idx = down;
-        }
+        board.gap_idx.push(active_idx);
+        board
+            .gap_idx
+            .retain(|value| *value != target_gap_index.unwrap());
+        board.active_tile_idx = target_gap_index.unwrap();
     }
 }
 

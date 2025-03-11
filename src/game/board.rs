@@ -111,9 +111,9 @@ pub fn spawn_hud(mut commands: Commands, board: Query<&Board>) {
 }
 
 pub fn layout_tiles(
-    mut query: Query<(&mut Transform, &Tile, Entity), With<Tile>>, 
+    mut query: Query<(&mut Transform, &Tile, Entity), With<Tile>>,
     q_board: Query<&Board>,
-    mut commands: Commands
+    mut commands: Commands,
 ) {
     let board = q_board.single();
 
@@ -125,9 +125,7 @@ pub fn layout_tiles(
         let column = tile.idx % board.cols;
 
         if board.gap_idx.contains(&tile.idx) {
-            commands
-            .entity(tile_entity)
-            .insert(Visibility::Hidden);
+            commands.entity(tile_entity).insert(Visibility::Hidden);
         }
 
         transform.translation.x = ((board.tile_size + board.tile_gap) * column as f32) - x_offset;
