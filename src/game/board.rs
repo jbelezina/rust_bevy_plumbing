@@ -10,7 +10,7 @@ use super::{
 pub struct Board {
     pub active_tile_idx: i16,
     pub size: i16,
-    pub gap_idx: i16,
+    pub gap_idx: Vec<i16>,
     pub cols: i16,
     pub rows: i16,
     pub tile_gap: f32,
@@ -23,13 +23,12 @@ const BOARD_ROWS: i16 = 10;
 const BOARD_COLS: i16 = 14;
 
 pub fn init_board(mut commands: Commands) {
-    let gap_idx = (BOARD_ROWS * BOARD_COLS) - 1;
     let board_size = BOARD_ROWS * BOARD_COLS;
     commands.spawn(Camera2d);
     commands.spawn((Board {
         active_tile_idx: 0,
         size: board_size,
-        gap_idx,
+        gap_idx: vec![5, 10, 15, 20, 30, 40],
         rows: BOARD_ROWS,
         cols: BOARD_COLS,
         tile_gap: 5.0,
@@ -97,7 +96,7 @@ pub fn spawn_tile_meshes(
             .insert(MeshMaterial2d(tile.material_handle.clone()));
         commands
             .entity(entity_id)
-            .insert(if board.gap_idx == tile.idx {
+            .insert(if board.gap_idx.contains(&tile.idx) {
                 Visibility::Hidden
             } else {
                 Visibility::Visible
@@ -111,15 +110,25 @@ pub fn spawn_hud(mut commands: Commands, board: Query<&Board>) {
     commands.spawn(Text::new(format!("Active tile {}", b.active_tile_idx)));
 }
 
-pub fn layout_tiles(mut query: Query<(&mut Transform, &Tile), With<Tile>>, q_board: Query<&Board>) {
+pub fn layout_tiles(
+    mut query: Query<(&mut Transform, &Tile, Entity), With<Tile>>, 
+    q_board: Query<&Board>,
+    mut commands: Commands
+) {
     let board = q_board.single();
 
     let x_offset = (board.cols as f32 * (board.tile_size + board.tile_gap)) / 2.0 - board.tile_gap;
     let y_offset = (board.rows as f32 * (board.tile_size + board.tile_gap)) / 2.0 - board.tile_gap;
 
-    for (mut transform, tile) in query.iter_mut() {
+    for (mut transform, tile, tile_entity) in query.iter_mut() {
         let row = tile.idx / board.cols;
         let column = tile.idx % board.cols;
+
+        if board.gap_idx.contains(&tile.idx) {
+            commands
+            .entity(tile_entity)
+            .insert(Visibility::Hidden);
+        }
 
         transform.translation.x = ((board.tile_size + board.tile_gap) * column as f32) - x_offset;
         transform.translation.y = -((board.tile_size + board.tile_gap) * row as f32) + y_offset;

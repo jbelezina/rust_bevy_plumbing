@@ -24,38 +24,46 @@ pub fn handle_tile_shuffle(
         let up = board.active_tile_idx + board.cols;
         let down = board.active_tile_idx - board.cols;
 
-        if right == board.gap_idx
-            || left == board.gap_idx
-            || up == board.gap_idx
-            || down == board.gap_idx
+        if board.gap_idx.contains(&right)
+            || board.gap_idx.contains(&left)
+            || board.gap_idx.contains(&up)
+            || board.gap_idx.contains(&down)
         {
             for (tile, mut visibility) in q_tiles.iter_mut() {
                 if tile.idx == board.active_tile_idx {
                     *visibility = Visibility::Hidden;
                 }
-                if tile.idx == board.gap_idx {
+                if board.gap_idx.contains(&tile.idx) {
                     *visibility = Visibility::Visible;
                 }
             }
         }
 
-        if right == board.gap_idx {
-            board.gap_idx = board.active_tile_idx;
+        if board.gap_idx.contains(&right) {
+            let active_idx = board.active_tile_idx.clone();
+            board.gap_idx.push(active_idx);
+            board.gap_idx.retain(|value| *value != right);
             board.active_tile_idx = right;
         }
 
-        if left == board.gap_idx {
-            board.gap_idx = board.active_tile_idx;
+        if board.gap_idx.contains(&left) {
+            let active_idx = board.active_tile_idx.clone();
+            board.gap_idx.push(active_idx);
+            board.gap_idx.retain(|value| *value != left);
             board.active_tile_idx = left;
         }
 
-        if up == board.gap_idx {
-            board.gap_idx = board.active_tile_idx;
+        if board.gap_idx.contains(&up) {
+            let active_idx = board.active_tile_idx.clone();
+            board.gap_idx.push(active_idx);
+            board.gap_idx.retain(|value| *value != up);
             board.active_tile_idx = up;
         }
 
-        if down == board.gap_idx {
-            board.gap_idx = board.active_tile_idx;
+        if board.gap_idx.contains(&down) {
+            let active_idx = board.active_tile_idx.clone();
+            board.gap_idx.push(active_idx);
+            board.gap_idx.retain(|value| *value != down);
             board.active_tile_idx = down;
         }
     }
@@ -66,28 +74,28 @@ pub fn handle_tile_selection(keys: Res<ButtonInput<KeyCode>>, mut q_board: Query
 
     if keys.just_pressed(KeyCode::ArrowRight) {
         let new_idx = board.active_tile_idx + 1;
-        if new_idx <= board.size - 1 && new_idx != board.gap_idx {
+        if new_idx <= board.size - 1 && !board.gap_idx.contains(&new_idx) {
             board.as_mut().active_tile_idx += 1;
         }
     }
 
     if keys.just_pressed(KeyCode::ArrowLeft) {
         let new_idx = board.active_tile_idx - 1;
-        if new_idx >= 0 && new_idx != board.gap_idx {
+        if new_idx >= 0 && !board.gap_idx.contains(&new_idx) {
             board.as_mut().active_tile_idx -= 1;
         }
     }
 
     if keys.just_pressed(KeyCode::ArrowDown) {
         let new_idx = board.active_tile_idx + board.cols;
-        if new_idx <= board.size - 1 && new_idx != board.gap_idx {
+        if new_idx <= board.size - 1 && !board.gap_idx.contains(&new_idx) {
             board.as_mut().active_tile_idx += board.cols;
         }
     }
 
     if keys.just_pressed(KeyCode::ArrowUp) {
         let new_idx = board.active_tile_idx - board.cols;
-        if new_idx >= 0 && new_idx != board.gap_idx {
+        if new_idx >= 0 && !board.gap_idx.contains(&new_idx) {
             board.as_mut().active_tile_idx -= board.cols;
         }
     }

@@ -16,11 +16,11 @@ fn main() {
         .add_systems(
             Update,
             ((
-                layout_tiles,
                 handle_tile_selection,
                 handle_tile_shuffle,
                 handle_tile_rotation,
                 update_active_tile,
+                layout_tiles,
             )
                 .chain(),),
         )
