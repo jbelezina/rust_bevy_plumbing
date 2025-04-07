@@ -9,6 +9,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(LineRenderingPlugin)
         .insert_resource(ClearColor(Color::BLACK))
+        .init_resource::<WaterTimer>()
         .add_systems(
             Startup,
             (init_board, spawn_tiles, spawn_tile_meshes, spawn_hud).chain(),
@@ -16,10 +17,13 @@ fn main() {
         .add_systems(
             Update,
             ((
+                tick_water_timer,
                 handle_tile_selection,
                 handle_tile_shuffle,
                 handle_tile_rotation,
                 update_active_tile,
+                update_display_next_water_idx,
+                update_water,
                 layout_tiles,
             )
                 .chain(),),

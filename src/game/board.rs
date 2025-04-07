@@ -1,16 +1,20 @@
 use bevy::prelude::*;
 use bevy_2d_line::Line;
+use rand::prelude::*;
 
 use super::{
-    pipe::{Pipe, PipeType},
+    pipe::{Pipe, PipeType, Point},
     tile::Tile,
 };
 
 #[derive(Component)]
 pub struct Board {
     pub active_tile_idx: i16,
+    pub water_idx: i16,
+    pub next_water_idx: i16,
+    pub next_entry_point: Point,
     pub size: i16,
-    pub gap_idx: Vec<i16>,
+    pub gap_idxs: Vec<i16>,
     pub cols: i16,
     pub rows: i16,
     pub tile_gap: f32,
@@ -27,8 +31,19 @@ pub fn init_board(mut commands: Commands) {
     commands.spawn(Camera2d);
     commands.spawn((Board {
         active_tile_idx: 0,
+        water_idx: 0,
+        next_water_idx: BOARD_COLS,
+        next_entry_point: Point::Top,
         size: board_size,
-        gap_idx: vec![5, 10, 15, 20, 30, 40],
+        gap_idxs: (|| {
+            let mut idxs = Vec::new();
+            let mut rng = rand::rng();
+            for _i in 1..(BOARD_ROWS * 2) {
+                let num = rng.random_range(1..(BOARD_COLS * BOARD_ROWS - 1));
+                idxs.push(num);
+            }
+            return idxs;
+        })(),
         rows: BOARD_ROWS,
         cols: BOARD_COLS,
         tile_gap: 5.0,
@@ -56,18 +71,21 @@ pub fn spawn_tiles(
             } else {
                 board.tile_color
             }),
+            movable: true,
         };
 
         commands.spawn(tile).with_children(|parent| {
             let colors = vec![LinearRgba::BLACK, LinearRgba::BLACK, LinearRgba::BLACK];
-            let rand_pipe_type = PipeType::random();
+            let pipe_type = if tile_idx == 0 {
+                PipeType::Straight(Point::Top)
+            } else {
+                PipeType::random()
+            };
 
             parent.spawn((
-                Pipe {
-                    pipe_type: rand_pipe_type,
-                },
+                Pipe { pipe_type },
                 Line {
-                    points: rand_pipe_type.get_points(),
+                    points: pipe_type.get_points(),
                     colors,
                     thickness: 5.0,
                 },
@@ -96,7 +114,7 @@ pub fn spawn_tile_meshes(
             .insert(MeshMaterial2d(tile.material_handle.clone()));
         commands
             .entity(entity_id)
-            .insert(if board.gap_idx.contains(&tile.idx) {
+            .insert(if board.gap_idxs.contains(&tile.idx) {
                 Visibility::Hidden
             } else {
                 Visibility::Visible
@@ -124,7 +142,7 @@ pub fn layout_tiles(
         let row = tile.idx / board.cols;
         let column = tile.idx % board.cols;
 
-        if board.gap_idx.contains(&tile.idx) {
+        if board.gap_idxs.contains(&tile.idx) {
             commands.entity(tile_entity).insert(Visibility::Hidden);
         }
 
