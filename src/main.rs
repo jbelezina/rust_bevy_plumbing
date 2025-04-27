@@ -18,8 +18,7 @@ fn main() {
             Update,
             ((
                 tick_water_timer,
-                handle_tile_selection,
-                handle_tile_shuffle,
+                handle_tile_select_shuffle,
                 handle_tile_rotation,
                 update_active_tile,
                 update_display_next_water_idx,
